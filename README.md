@@ -1,43 +1,43 @@
 # Banking System
 
-Многомодульный backend-проект на Java и Spring Boot, реализующий банковую систему с REST API, отдельным API Gateway, JWT-аутентификацией и асинхронной обработкой событий через Kafka.
+A multi-module backend project in Java and Spring Boot that implements a banking system with a REST API, a separate API Gateway, JWT authentication, and asynchronous event processing via Kafka.
 
-Проект собран как набор связанных сервисов:
+The project is built as a set of related services:
 
-- **bank-presentation** — основной HTTP API банковой системы
-- **bank-application** — бизнес-логика
-- **bank-infrastructure** — сущности, DTO, репозитории и общая инфраструктура
-- **API-Gateway** — точка входа с аутентификацией и ролевым доступом
-- **Storage** — сервис-потребитель Kafka-событий с сохранением истории изменений в БД
+- **bank-presentation** — the main HTTP API of the banking system
+- **bank-application** — business logic
+- **bank-infrastructure** — entities, DTOs, repositories, and general infrastructure
+- **API-Gateway** — an entry point with authentication and role access
+- **Storage** — a Kafka event consumer service that saves the history of changes in the database
 
-## Что реализовано
+## What is implemented
 
-Система поддерживает:
+The system supports:
 
-- регистрацию и хранение пользователей;
-- создание банковских счетов;
-- пополнение счёта;
-- снятие средств;
-- переводы между счетами;
-- просмотр баланса;
-- просмотр истории транзакций;
-- работу с друзьями пользователя;
-- фильтрацию пользователей по полу и цвету волос;
-- ролевую модель **ADMIN / CLIENT**;
-- вход по логину и паролю с получением **JWT**;
-- выход с занесением токена в blacklist;
-- публикацию событий об изменении пользователей и счетов в **Kafka**;
-- отдельное асинхронное хранилище событий.
+- user registration and storage;
+- creation of bank accounts;
+- account replenishment;
+- withdrawal of funds;
+- transfers between accounts;
+- viewing the balance;
+- viewing the transaction history;
+- working with the user's friends;
+- filtering users by gender and hair color;
+- the **ADMIN / CLIENT** role model;
+- login using a login and password with obtaining a **JWT**;
+- logout with adding the token to the blacklist;
+- publishing events about user and account changes in **Kafka**;
+- a separate asynchronous event storage.
 
-## Архитектура
+## Architecture
 
-### 1. Основной банковский сервис
+### 1. The main banking service
 
-Бизнес-логика разделена на три модуля:
+The business logic is divided into three modules:
 
 #### `bank-application`
 
-Содержит прикладные сервисы и мапперы:
+Contains application services and mappers:
 
 - `AccountService`
 - `UserService`
@@ -46,61 +46,61 @@
 - `UserMapper`
 - `TransactionMapper`
 
-Основные сценарии:
+The main scenarios are:
 
-- создание счёта для пользователя;
-- депозиты и снятие средств;
-- переводы между счетами;
-- расчёт комиссии при переводах;
-- получение счетов и транзакций;
-- регистрация пользователей;
-- добавление и удаление друзей;
-- отправка событий в Kafka-топики `client-topic` и `account-topic`.
+- creating an account for a user;
+- depositing and withdrawing funds;
+- transferring funds between accounts;
+- calculating the commission for transfers;
+- retrieving accounts and transactions;
+- registering users;
+- adding and removing friends;
+- sending events to Kafka topics `client-topic` and `account-topic`.
 
 #### `bank-infrastructure`
 
-Содержит инфраструктурный слой:
+Contains the infrastructure layer:
 
-- JPA-сущности `User`, `Account`, `Transaction`;
-- DTO для API и событий;
-- Spring Data JPA репозитории;
-- enums для статусов и типов транзакций;
-- собственные исключения и глобальный обработчик ошибок.
+- JPA entities `User`, `Account`, `Transaction`;
+- DTOs for API and events;
+- Spring Data JPA repositories;
+- enums for transaction statuses and types;
+- custom exceptions and a global error handler.
 
 #### `bank-presentation`
 
-Содержит REST-контроллеры:
+Contains REST controllers:
 
 - `UserController`
 - `AccountController`
 - `BankApplication`
 
-Основные endpoint'ы покрывают:
+The main endpoints cover:
 
-- пользователей;
-- друзей пользователя;
-- пользовательские счета;
-- создание счетов;
-- баланс;
-- переводы;
-- историю транзакций;
-- фильтрацию транзакций по типу и счёту.
+- users;
+- user friends;
+- user accounts;
+- account creation;
+- balance;
+- transfers;
+- transaction history;
+- transaction filtering by type and account.
 
 ### 2. API Gateway
 
-`API-Gateway` — отдельное Spring Boot приложение, выступающее внешней точкой входа.
+`API-Gateway` is a separate Spring Boot application that acts as an external entry point.
 
-Что делает gateway:
+What the gateway does:
 
-- аутентифицирует пользователей;
-- генерирует JWT;
-- валидирует JWT в `JwtAuthFilter`;
-- ограничивает доступ по ролям;
-- хранит учётные записи gateway в таблице `gateway_users`;
-- хранит отозванные токены в `token_blacklist`;
-- проксирует вызовы в основной банковский API через `RestTemplate`.
+- authenticates users;
+- generates JWTs;
+- validates JWTs in the `JwtAuthFilter`;
+- restricts access by roles;
+- stores gateway accounts in the `gateway_users` table;
+- stores revoked tokens in the `token_blacklist`;
+- proxies calls to the main banking API through the `RestTemplate`.
 
-Основные компоненты:
+The main components are:
 
 - `AuthController`
 - `AdminController`
@@ -112,23 +112,23 @@
 - `UserDetailsServiceImpl`
 - `SecurityConfig`
 
-Ролевой доступ:
+Role access:
 
-- **ADMIN** — создание администраторов и клиентов, просмотр пользователей и счетов;
-- **CLIENT** — просмотр своих данных, работа с друзьями, пополнение, снятие и переводы.
+- **ADMIN** — creating administrators and clients, viewing users and accounts;
+- **CLIENT** — viewing their own data, working with friends, depositing, withdrawing, and transferring.
 
 ### 3. Storage
 
-`Storage` — отдельный сервис для асинхронной фиксации событий.
+`Storage` is a separate service for asynchronous event fixation.
 
-Он:
+It:
 
-- подключается к Kafka;
-- читает сообщения из топиков;
-- сохраняет события в PostgreSQL;
-- хранит отдельно события по клиентам и счетам.
+- connects to Kafka;
+- reads messages from topics;
+- saves events in PostgreSQL;
+- stores events separately by clients and accounts.
 
-Основные компоненты:
+Main components:
 
 - `KafkaConsumer`
 - `AccountEvent`
@@ -136,43 +136,43 @@
 - `AccountEventRepository`
 - `ClientEventRepository`
 
-## Особенности бизнес-логики
+## Business logic features
 
-### Переводы и комиссия
+### Transfers and commission
 
-В `AccountService` реализована комиссия при переводе:
+The `AccountService` implements a commission for transfers:
 
-- **0%** — перевод самому себе;
-- **3%** — перевод другу;
-- **10%** — перевод другому пользователю, который не находится в списке друзей.
+- **0%** — transfer to yourself;
+- **3%** — transfer to a friend;
+- **10%** — transfer to another user who is not in the friend list.
 
-### Транзакции
+### Transactions
 
-Поддерживаются типы операций:
+Supported operation types:
 
 - `DEPOSIT`
 - `WITHDRAW`
 - `TRANSFER`
 
-Поддерживаются статусы транзакций:
+Supported transaction statuses:
 
 - `PENDING`
 - `SUCCESS`
 - `FAILED`
 
-### Пользователи
+### Users
 
-Пользователь содержит:
+A user contains:
 
-- логин;
-- имя;
-- возраст;
-- пол;
-- цвет волос;
-- список друзей;
-- список счетов.
+- login;
+- name;
+- age;
+- gender;
+- hair color;
+- list of friends;
+- list of accounts.
 
-## Технологический стек
+## Technology stack
 
 - **Java 23**
 - **Spring Boot 3.4.4**
@@ -189,7 +189,7 @@
 - **Docker Compose**
 - **GitHub Actions**
 
-## Структура репозитория
+## Repository structure
 
 ```text
 .
@@ -202,7 +202,7 @@
 └── pom.xml
 ```
 
-Корневой `pom.xml` — агрегирующий parent-проект с модулями:
+The root `pom.xml` is an aggregating parent-project with modules:
 
 - `bank-application`
 - `bank-infrastructure`
@@ -210,16 +210,16 @@
 - `API-Gateway`
 - `Storage`
 
-## Инфраструктура и порты
+## Infrastructure and ports
 
-### PostgreSQL и pgAdmin
+### PostgreSQL and pgAdmin
 
-В корневом `docker-compose.yml` поднимаются:
+In the root `docker-compose.yml`, the following are raised:
 
-- **PostgreSQL** на `localhost:54321`
-- **pgAdmin** на `localhost:8080`
+- **PostgreSQL** on `localhost:54321`
+- **pgAdmin** on `localhost:8080`
 
-Параметры БД:
+DB parameters:
 
 - database: `bank`
 - user: `postgres`
@@ -227,69 +227,69 @@
 
 ### Kafka
 
-В `Storage/docker-compose.yml` поднимаются:
+In `Storage/docker-compose.yml`, the following are raised:
 
-- **Zookeeper** на `2181`
-- **Kafka** на `9092`
+- **Zookeeper** on `2181`
+- **Kafka** on `9092`
 
-### Порты приложений
+### Application ports
 
 - **bank-presentation** — `8081`
 - **API-Gateway** — `8082`
 - **Storage** — `8083`
 
-## Безопасность
+## Security
 
-Безопасность вынесена в `API-Gateway`.
+Security is implemented in `API-Gateway`.
 
-Реализовано:
+Implemented:
 
-- stateless-конфигурация через `SessionCreationPolicy.STATELESS`;
-- вход через `/api/auth/login`;
-- JWT-фильтр `JwtAuthFilter`;
-- шифрование паролей через `BCryptPasswordEncoder`;
-- blacklist токенов при logout;
-- разделение прав через `@PreAuthorize`.
+- stateless configuration via `SessionCreationPolicy.STATELESS`;
+- login via `/api/auth/login`;
+- JWT filter `JwtAuthFilter`;
+- password encryption via `BCryptPasswordEncoder`;
+- blacklist tokens on logout;
+- separation of rights via `@PreAuthorize`.
 
-Основные защищённые зоны:
+The main protected zones are:
 
-- `/api/admin/**` — только `ADMIN`;
-- `/api/client/**` — только `CLIENT`.
+- `/api/admin/**` — only `ADMIN`;
+- `/api/client/**` — only `CLIENT`.
 
-## Документация API
+## API documentation
 
-Swagger/OpenAPI включён в:
+Swagger/OpenAPI is included in:
 
 - `bank-presentation`
 - `API-Gateway`
 
-Судя по конфигурации, приложение публикует OpenAPI-документацию и Swagger UI через `springdoc`.
+Based on the configuration, the application publishes OpenAPI documentation and Swagger UI through `springdoc`.
 
-## Событийная модель
+## Event model
 
-При изменениях в системе публикуются события двух типов:
+When changes are made in the system, two types of events are published:
 
-- **Client events** — создание и изменение пользователей;
-- **Account events** — создание счетов, изменение баланса и новые операции.
+- **Client events** — creation and modification of users;
+- **Account events** — creation of accounts, modification of balances, and new operations.
 
-Банковый сервис публикует события в Kafka, а `Storage` сохраняет их в БД. Это позволяет отделить основную бизнес-логику от слоя аудита и асинхронного хранения истории изменений.
+The banking service publishes events to Kafka, and `Storage` stores them in the database. This allows for the separation of the main business logic from the audit layer and asynchronous storage of change history.
 
-## Сборка и запуск
+## Building and running
 
-### 1. Клонирование репозитория
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/EpicWhal3/Java-projects.git
 cd Java-projects
 ```
 
-### 2. Поднять PostgreSQL и pgAdmin
+### 2. Start PostgreSQL and pgAdmin
 
 ```bash
 docker compose up -d
 ```
 
-### 3. Поднять Kafka и Zookeeper
+### 3. Start Kafka and Zookeeper
 
 ```bash
 cd Storage
@@ -297,15 +297,15 @@ docker compose up -d
 cd ..
 ```
 
-### 4. Собрать проект
+### 4. Build the project
 
 ```bash
 mvn clean install
 ```
 
-### 5. Запустить приложения
+### 5. Run the applications
 
-В отдельных терминалах:
+In separate terminals:
 
 #### bank-presentation
 
@@ -330,4 +330,4 @@ mvn spring-boot:run
 
 ## CI
 
-В репозитории настроен GitHub Actions workflow `.github/workflows/java.yml`, который собирает проект через Maven при `push`.
+The repository has a GitHub Actions workflow configured at `.github/workflows/java.yml`, which builds the project via Maven on `push`.
